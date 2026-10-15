@@ -16,6 +16,32 @@ A user downloaded and created a known malicious test file `EICAR.txt`. Goal: Det
 ## ⚙️ What I Did
 
 ### 1. Prepare Lab Environment
-```powershell
+
 mkdir C:\Temp -Force
 Add-MpPreference -ExclusionPath C:\Temp
+
+Created isolated folder to prevent real-time protection from auto-deleting file before detection logic triggers - key SOC evasion consideration.
+
+### 2. Create Custom Analytics Rule in Sentinel
+
+**Rule Name:** SC200 - EICAR Detection - Sfundo
+
+**Frequency:** Every 1 Hour
+
+**KQL Query:**
+**Alert:** Medium Severity - `EICAR file detected`
+**Incident Creation:** Enabled - Group alerts into single incident
+
+### 3. Execute Malware Simulation
+
+notepad C:\Temp\EICAR.txt
+# Content: X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*
+
+dir C:\Temp
+# Length 68 bytes - confirmed
+DeviceFileEvents | where FileName == "EICAR.txt"
+DeviceProcessEvents | where InitiatingProcessFileName == "notepad.exe"
+
+Remove-Item C:\Temp\EICAR.txt -Force
+Remove-MpPreference -ExclusionPath C:\Temp
+
